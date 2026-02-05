@@ -1,0 +1,6 @@
+com\carmarketpro\prediction\dto\PricePredictionResponse$PricePredictionResponseBuilder.class
+com\carmarketpro\prediction\PredictionServiceApplication.class
+com\carmarketpro\prediction\controller\PredictionController.class
+com\carmarketpro\prediction\dto\PricePredictionRequest.class
+com\carmarketpro\prediction\service\PredictionService.class
+com\carmarketpro\prediction\dto\PricePredictionResponse.class

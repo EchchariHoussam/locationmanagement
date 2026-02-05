@@ -1,0 +1,10 @@
+com\carmarketpro\analytics\service\ReportService.class
+com\carmarketpro\analytics\AnalyticsServiceApplication.class
+com\carmarketpro\analytics\dto\ReportResponse.class
+com\carmarketpro\analytics\controller\ReportController.class
+com\carmarketpro\analytics\repository\ReportRepository.class
+com\carmarketpro\analytics\exception\GlobalExceptionHandler.class
+com\carmarketpro\analytics\dto\ReportResponse$ReportResponseBuilder.class
+com\carmarketpro\analytics\domain\Report$ReportBuilder.class
+com\carmarketpro\analytics\domain\Report.class
+com\carmarketpro\analytics\exception\ResourceNotFoundException.class

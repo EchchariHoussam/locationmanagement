@@ -1,0 +1,35 @@
+server:
+  port: ${SERVER_PORT:8088}
+
+spring:
+  application:
+    name: prediction-service
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
+
+# URL du service ML externe (optionnel). Si vide, utilise heuristique.
+app:
+  prediction:
+    ml-url: ${ML_SERVICE_URL:}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%X{correlationId}] [%thread] %-5level %logger{36} - %msg%n"

@@ -1,0 +1,8 @@
+com\carmarketpro\common\api\ErrorDetail$ErrorDetailBuilder.class
+com\carmarketpro\common\api\ApiResponse.class
+com\carmarketpro\common\config\CommonLibConfig.class
+com\carmarketpro\common\correlation\CorrelationIdPropagator.class
+com\carmarketpro\common\api\Meta$MetaBuilder.class
+com\carmarketpro\common\api\Meta.class
+com\carmarketpro\common\correlation\CorrelationIdFilter.class
+com\carmarketpro\common\api\ErrorDetail.class

@@ -1,0 +1,11 @@
+C:\Users\ThinkPad\Desktop\locationmng\transaction-service\src\main\java\com\carmarketpro\transaction\controller\PurchaseController.java
+C:\Users\ThinkPad\Desktop\locationmng\transaction-service\src\main\java\com\carmarketpro\transaction\domain\Purchase.java
+C:\Users\ThinkPad\Desktop\locationmng\transaction-service\src\main\java\com\carmarketpro\transaction\domain\PurchaseStatus.java
+C:\Users\ThinkPad\Desktop\locationmng\transaction-service\src\main\java\com\carmarketpro\transaction\dto\PurchaseRequest.java
+C:\Users\ThinkPad\Desktop\locationmng\transaction-service\src\main\java\com\carmarketpro\transaction\dto\PurchaseResponse.java
+C:\Users\ThinkPad\Desktop\locationmng\transaction-service\src\main\java\com\carmarketpro\transaction\exception\GlobalExceptionHandler.java
+C:\Users\ThinkPad\Desktop\locationmng\transaction-service\src\main\java\com\carmarketpro\transaction\exception\ResourceNotFoundException.java
+C:\Users\ThinkPad\Desktop\locationmng\transaction-service\src\main\java\com\carmarketpro\transaction\mapper\PurchaseMapper.java
+C:\Users\ThinkPad\Desktop\locationmng\transaction-service\src\main\java\com\carmarketpro\transaction\repository\PurchaseRepository.java
+C:\Users\ThinkPad\Desktop\locationmng\transaction-service\src\main\java\com\carmarketpro\transaction\service\PurchaseService.java
+C:\Users\ThinkPad\Desktop\locationmng\transaction-service\src\main\java\com\carmarketpro\transaction\TransactionServiceApplication.java

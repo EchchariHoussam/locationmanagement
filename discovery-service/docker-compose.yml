@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  discovery-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    environment:
+      SERVER_PORT: 8761
+      # Configuration Eureka
+      EUREKA_CLIENT_REGISTER_WITH_Eureka: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+      EUREKA_SERVER_ENABLE_SELF_PRESERVATION: "false"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8761/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

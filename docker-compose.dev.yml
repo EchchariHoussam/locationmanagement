@@ -1,0 +1,96 @@
+services:
+  # PostgreSQL partagé
+  postgres:
+    image: postgres:16-alpine
+    container_name: carmarket-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: code
+      POSTGRES_DB: auth_db  # DB par défaut
+    ports:
+      - "5433:5432"  # 5433 sur Windows, 5432 dans le conteneur
+    volumes:
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Discovery Service
+  discovery-service:
+    build:
+      context: ./discovery-service
+      dockerfile: Dockerfile
+    container_name: carmarket-discovery
+    ports:
+      - "8761:8761"
+    environment:
+      SERVER_PORT: 8761
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: carmarket-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      EUREKA_URI: http://discovery-service:8761/eureka/
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: carmarket-auth
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: 8081
+      EUREKA_URI: http://discovery-service:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: code
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_ACCESS_SECRET: your-256-bit-access-secret-key-for-carmarket-pro-auth
+      JWT_REFRESH_SECRET: your-256-bit-refresh-secret-key-for-carmarket-pro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+
+  # Catalog Service
+  catalog-service:
+    build:
+      context: ./catalog-service
+      dockerfile: Dockerfile
+    container_name: carmarket-catalog
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/catalog_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: code
+      EUREKA_URI: http://discovery-service:8761/eureka/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

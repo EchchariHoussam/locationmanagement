@@ -1,0 +1,2 @@
+com\carmarketpro\gateway\filter\CorrelationIdGatewayFilter.class
+com\carmarketpro\gateway\ApiGatewayApplication.class

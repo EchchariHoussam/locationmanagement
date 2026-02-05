@@ -1,0 +1,14 @@
+com\carmarketpro\rental\mapper\ReservationMapper.class
+com\carmarketpro\rental\dto\ReservationResponse.class
+com\carmarketpro\rental\RentalServiceApplication.class
+com\carmarketpro\rental\controller\ReservationController.class
+com\carmarketpro\rental\domain\Reservation.class
+com\carmarketpro\rental\dto\ReservationRequest.class
+com\carmarketpro\rental\mapper\ReservationMapperImpl.class
+com\carmarketpro\rental\domain\ReservationStatus.class
+com\carmarketpro\rental\exception\ResourceNotFoundException.class
+com\carmarketpro\rental\domain\Reservation$ReservationBuilder.class
+com\carmarketpro\rental\dto\ReservationResponse$ReservationResponseBuilder.class
+com\carmarketpro\rental\exception\GlobalExceptionHandler.class
+com\carmarketpro\rental\service\ReservationService.class
+com\carmarketpro\rental\repository\ReservationRepository.class
