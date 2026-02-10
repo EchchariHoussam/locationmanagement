@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.UUID;
 
@@ -21,29 +23,29 @@ public class UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
+    // 🔹 Trouver un utilisateur par ID
     public UserResponse findById(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
         return userMapper.toResponse(user);
     }
 
-   @Transactional
+    // 🔹 Mettre à jour les infos de l'utilisateur (sauf role)
+    @Transactional
 public UserResponse update(UUID id, UserUpdateRequest request) {
 
     User user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", id));
 
-    // ENABLED
     if (request.getEnabled() != null) {
         user.setEnabled(request.getEnabled());
     }
 
-    // EMAIL
     if (request.getEmail() != null && !request.getEmail().isBlank()) {
         user.setEmail(request.getEmail());
     }
 
-    // PASSWORD → utiliser le bon champ
+
     if (request.getPassword() != null && !request.getPassword().isBlank()) {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
     }
@@ -52,4 +54,12 @@ public UserResponse update(UUID id, UserUpdateRequest request) {
 
     return userMapper.toResponse(userRepository.save(user));
 }
+
+
+    // 🔹 Liste paginée de tous les utilisateurs
+    public Page<UserResponse> findAll(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(userMapper::toResponse);
+    }
+
 }

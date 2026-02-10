@@ -1,5 +1,6 @@
 -- Auth service schema (spec: users, roles, user_roles, refresh_tokens)
 -- Using public schema
+CREATE DATABASE auth_db OWNER postgres IF NOT EXISTS;
 
 CREATE TABLE public.users (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),

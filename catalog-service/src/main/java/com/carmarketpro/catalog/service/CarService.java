@@ -2,7 +2,7 @@ package com.carmarketpro.catalog.service;
 
 import com.carmarketpro.catalog.dto.CarRequest;
 import com.carmarketpro.catalog.dto.CarResponse;
-import com.carmarketpro.catalog.entity.Car;
+import com.carmarketpro.catalog.domain.Car;
 import com.carmarketpro.catalog.repository.CarRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

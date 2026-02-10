@@ -47,6 +47,8 @@ public class Car {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+     
+
     @PrePersist
     void prePersist() {
         if (createdAt == null) createdAt = Instant.now();

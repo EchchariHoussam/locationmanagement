@@ -1,13 +1,2 @@
-com\carmarketpro\catalog\CatalogServiceApplication.class
-com\carmarketpro\catalog\repository\CarRepository.class
-com\carmarketpro\catalog\mapper\CarMapperImpl.class
-com\carmarketpro\catalog\service\CarService.class
-com\carmarketpro\catalog\dto\CarResponse$CarResponseBuilder.class
-com\carmarketpro\catalog\dto\CarResponse.class
-com\carmarketpro\catalog\domain\Car$CarBuilder.class
-com\carmarketpro\catalog\dto\CarRequest.class
 com\carmarketpro\catalog\controller\CarController.class
-com\carmarketpro\catalog\mapper\CarMapper.class
-com\carmarketpro\catalog\domain\Car.class
-com\carmarketpro\catalog\exception\GlobalExceptionHandler.class
-com\carmarketpro\catalog\exception\ResourceNotFoundException.class
+com\carmarketpro\catalog\CatalogServiceApplication.class

@@ -19,5 +19,10 @@ public class UserUpdateRequest {
     @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
 
-    
+    // ⚡ AJOUTER CES CHAMPS
+    private String firstname;
+    private String lastname;
+    private String phone;
+    private String address;
+    private String city;
 }
