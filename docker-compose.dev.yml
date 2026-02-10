@@ -1,12 +1,17 @@
+version: '3.8'
+
 services:
-  # PostgreSQL partagé
+  # ============================================
+  # POSTGRESQL - Base de données partagée
+  # ============================================
   postgres:
     image: postgres:16-alpine
     container_name: carmarket-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: code
-      POSTGRES_DB: auth_db  # DB par défaut
+      POSTGRES_PASSWORD: TokyoTokyo123321
+      POSTGRES_DB: postgres  # DB par défaut pour l'initialisation
     ports:
       - "5433:5432"  # 5433 sur Windows, 5432 dans le conteneur
     volumes:
@@ -17,8 +22,32 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 30s
+    networks:
+      - carmarket-network
 
-  # Discovery Service
+  # ============================================
+  # PGADMIN (Optionnel pour développement)
+  # ============================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: carmarket-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@carmarket.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - carmarket-network
+
+  # ============================================
+  # DISCOVERY SERVICE (Eureka)
+  # ============================================
   discovery-service:
     build:
       context: ./discovery-service
@@ -28,13 +57,21 @@ services:
       - "8761:8761"
     environment:
       SERVER_PORT: 8761
+      SPRING_PROFILES_ACTIVE: dev
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8761/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
+    networks:
+      - carmarket-network
+    depends_on:
+      - postgres
 
-  # API Gateway
+  # ============================================
+  # API GATEWAY (Spring Cloud Gateway)
+  # ============================================
   api-gateway:
     build:
       context: ./api-gateway
@@ -44,12 +81,26 @@ services:
       - "8080:8080"
     environment:
       SERVER_PORT: 8080
-      EUREKA_URI: http://discovery-service:8761/eureka/
+      SPRING_PROFILES_ACTIVE: dev
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - carmarket-network
     depends_on:
       discovery-service:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
 
-  # Auth Service
+  # ============================================
+  # AUTH SERVICE
+  # ============================================
   auth-service:
     build:
       context: ./auth-service
@@ -58,21 +109,69 @@ services:
     ports:
       - "8081:8081"
     environment:
+      # Server
       SERVER_PORT: 8081
-      EUREKA_URI: http://discovery-service:8761/eureka/
+      SPRING_PROFILES_ACTIVE: dev
+      
+      # Eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+      EUREKA_INSTANCE_HOSTNAME: auth-service
+      
+      # Database - Utilise postgres comme utilisateur
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/auth_db
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: code
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      JWT_ACCESS_SECRET: your-256-bit-access-secret-key-for-carmarket-pro-auth
+      SPRING_DATASOURCE_PASSWORD: TokyoTokyo123321
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      
+      # JPA/Hibernate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_JPA_SHOW_SQL: "false"
+      SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA: public
+      
+      # Flyway - Utilise également postgres
+      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_FLYWAY_USER: postgres
+      SPRING_FLYWAY_PASSWORD: TokyoTokyo123321
+      SPRING_FLYWAY_SCHEMAS: public
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      SPRING_FLYWAY_VALIDATE_ON_MIGRATE: "true"
+      SPRING_FLYWAY_PLACEHOLDERS_APP_USER: postgres
+      
+      # JWT
+      JWT_SECRET: your-256-bit-access-secret-key-for-carmarket-pro-auth
+      JWT_EXPIRATION: "86400000"  # 24h en ms
       JWT_REFRESH_SECRET: your-256-bit-refresh-secret-key-for-carmarket-pro
+      JWT_REFRESH_EXPIRATION: "604800000"  # 7 jours en ms
+      
+      # Logging
+      LOGGING_LEVEL_COM_CARMARKET: DEBUG
+      LOGGING_LEVEL_ORG_FLYWAYDB: DEBUG
+      
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - carmarket-network
     depends_on:
       postgres:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
-  # Catalog Service
+  # ============================================
+  # CATALOG SERVICE
+  # ============================================
   catalog-service:
     build:
       context: ./catalog-service
@@ -81,16 +180,196 @@ services:
     ports:
       - "8082:8082"
     environment:
+      # Server
       SERVER_PORT: 8082
+      SPRING_PROFILES_ACTIVE: dev
+      
+      # Eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+      EUREKA_INSTANCE_HOSTNAME: catalog-service
+      
+      # Database - Utilise postgres comme utilisateur
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/catalog_db
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: code
-      EUREKA_URI: http://discovery-service:8761/eureka/
+      SPRING_DATASOURCE_PASSWORD: TokyoTokyo123321
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      
+      # JPA/Hibernate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_JPA_SHOW_SQL: "false"
+      
+      # Logging
+      LOGGING_LEVEL_COM_CARMARKET: DEBUG
+      
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - carmarket-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================
+  # RENTAL SERVICE
+  # ============================================
+  rental-service:
+    build:
+      context: ./rental-service
+      dockerfile: Dockerfile
+    container_name: carmarket-rental
+    ports:
+      - "8083:8083"
+    environment:
+      # Server
+      SERVER_PORT: 8083
+      SPRING_PROFILES_ACTIVE: dev
+      
+      # Eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+      EUREKA_INSTANCE_HOSTNAME: rental-service
+      
+      # Database - Utilise postgres comme utilisateur
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/rental_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: TokyoTokyo123321
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      
+      # JPA/Hibernate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - carmarket-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================
+  # TRANSACTION SERVICE
+  # ============================================
+  transaction-service:
+    build:
+      context: ./transaction-service
+      dockerfile: Dockerfile
+    container_name: carmarket-transaction
+    ports:
+      - "8084:8084"
+    environment:
+      # Server
+      SERVER_PORT: 8084
+      SPRING_PROFILES_ACTIVE: dev
+      
+      # Eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+      EUREKA_INSTANCE_HOSTNAME: transaction-service
+      
+      # Database - Utilise postgres comme utilisateur
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/transaction_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: TokyoTokyo123321
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      
+      # JPA/Hibernate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8084/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - carmarket-network
     depends_on:
       postgres:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
 
+  # ============================================
+  # PAYMENT SERVICE
+  # ============================================
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: carmarket-payment
+    ports:
+      - "8085:8085"
+    environment:
+      # Server
+      SERVER_PORT: 8085
+      SPRING_PROFILES_ACTIVE: dev
+      
+      # Eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+      EUREKA_INSTANCE_HOSTNAME: payment-service
+      
+      # Database - Utilise postgres comme utilisateur
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payment_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: TokyoTokyo123321
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      
+      # JPA/Hibernate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8085/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - carmarket-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+
+# ============================================
+# VOLUMES
+# ============================================
 volumes:
   postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+# ============================================
+# NETWORKS
+# ============================================
+networks:
+  carmarket-network:
+    driver: bridge
