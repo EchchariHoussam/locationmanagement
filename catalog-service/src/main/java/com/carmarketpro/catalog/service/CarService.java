@@ -1,9 +1,10 @@
 package com.carmarketpro.catalog.service;
 
+import com.carmarketpro.catalog.domain.Car;
 import com.carmarketpro.catalog.dto.CarRequest;
 import com.carmarketpro.catalog.dto.CarResponse;
-import com.carmarketpro.catalog.domain.Car;
 import com.carmarketpro.catalog.repository.CarRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +19,7 @@ public class CarService {
 
     private final CarRepository carRepository;
 
-    // Create
+    /* ================= CREATE ================= */
     public CarResponse create(CarRequest request) {
         Car car = new Car();
         car.setBrand(request.getBrand());
@@ -29,67 +29,76 @@ public class CarService {
         car.setPriceRentDay(request.getPriceRentDay());
         car.setAvailableSale(request.getAvailableSale() != null ? request.getAvailableSale() : true);
         car.setAvailableRent(request.getAvailableRent() != null ? request.getAvailableRent() : true);
-        car = carRepository.save(car);
-        return mapToResponse(car);
+
+        return mapToResponse(carRepository.save(car));
     }
 
-    // Update
+    /* ================= UPDATE ================= */
     public CarResponse update(UUID id, CarRequest request) {
-        Car car = carRepository.findById(id).orElseThrow(() -> new RuntimeException("Car not found"));
+        Car car = carRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Car not found"));
+
         car.setBrand(request.getBrand());
         car.setModel(request.getModel());
         car.setYear(request.getYear());
         car.setPriceSale(request.getPriceSale());
         car.setPriceRentDay(request.getPriceRentDay());
-        car.setAvailableSale(request.getAvailableSale() != null ? request.getAvailableSale() : car.getAvailableSale());
-        car.setAvailableRent(request.getAvailableRent() != null ? request.getAvailableRent() : car.getAvailableRent());
-        car = carRepository.save(car);
-        return mapToResponse(car);
+        if (request.getAvailableSale() != null) car.setAvailableSale(request.getAvailableSale());
+        if (request.getAvailableRent() != null) car.setAvailableRent(request.getAvailableRent());
+
+        return mapToResponse(carRepository.save(car));
     }
 
-    // Delete
+    /* ================= DELETE ================= */
     public void delete(UUID id) {
-        Car car = carRepository.findById(id).orElseThrow(() -> new RuntimeException("Car not found"));
-        carRepository.delete(car);
+        if (!carRepository.existsById(id)) {
+            throw new EntityNotFoundException("Car not found");
+        }
+        carRepository.deleteById(id);
     }
 
-    // Find by ID
+    /* ================= READ ================= */
     public CarResponse findById(UUID id) {
-        Car car = carRepository.findById(id).orElseThrow(() -> new RuntimeException("Car not found"));
+        Car car = carRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Car not found"));
         return mapToResponse(car);
     }
 
-    // Paginated list
     public Page<CarResponse> findAll(String brand, Integer year, Boolean availableSale, Pageable pageable) {
-        Page<Car> page = carRepository.findAll(pageable)
-                .map(car -> {
-                    if (brand != null && !car.getBrand().equalsIgnoreCase(brand)) return null;
-                    if (year != null && !car.getYear().equals(year)) return null;
-                    if (availableSale != null && !car.getAvailableSale().equals(availableSale)) return null;
-                    return car;
-                });
-        return page.map(this::mapToResponse);
-    }
+        Page<Car> carsPage = carRepository.findAll(pageable);
 
-    // All cars
-    public List<CarResponse> findAll() {
-        return carRepository.findAll().stream()
+        List<CarResponse> filtered = carsPage.stream()
+                .filter(car -> {
+                    if (brand != null && !car.getBrand().equalsIgnoreCase(brand)) return false;
+                    if (year != null && !car.getYear().equals(year)) return false;
+                    if (availableSale != null && car.isAvailableSale() != availableSale) return false;
+                    return true;
+                })
                 .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .toList();
+
+        return new org.springframework.data.domain.PageImpl<>(filtered, pageable, carsPage.getTotalElements());
     }
 
-    // Manual mapping Car -> CarResponse
+    // Surcharge pour retourner toutes les voitures sans pagination
+    public List<CarResponse> findAll() {
+        return carRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    /* ================= HELPER ================= */
     private CarResponse mapToResponse(Car car) {
-        return CarResponse.builder()
-                .id(car.getId())
-                .brand(car.getBrand())
-                .model(car.getModel())
-                .year(car.getYear())
-                .priceSale(car.getPriceSale())
-                .priceRentDay(car.getPriceRentDay())
-                .availableSale(car.getAvailableSale() != null ? car.getAvailableSale() : false)
-                .availableRent(car.getAvailableRent() != null ? car.getAvailableRent() : false)
-                .createdAt(car.getCreatedAt())
-                .build();
+        CarResponse response = new CarResponse();
+        response.setId(car.getId());
+        response.setBrand(car.getBrand());
+        response.setModel(car.getModel());
+        response.setYear(car.getYear());
+        response.setPriceSale(car.getPriceSale());
+        response.setPriceRentDay(car.getPriceRentDay());
+        response.setAvailableSale(car.isAvailableSale());
+        response.setAvailableRent(car.isAvailableRent());
+        return response;
     }
 }

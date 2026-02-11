@@ -84,7 +84,7 @@ public class CarController {
         return ResponseEntity.ok(ApiResponse.ok(null, "Deleted"));
     }
 
-    // New endpoint: all cars
+    // All cars without pagination
     @GetMapping("/all-cars")
     @Operation(summary = "Get all cars", description = "Return all cars without pagination")
     public ResponseEntity<ApiResponse<List<CarResponse>>> allCars() {

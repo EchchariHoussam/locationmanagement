@@ -1,51 +1,34 @@
-server:
-  port: ${SERVER_PORT:8082}
-
+# catalog-service/src/main/resources/application.yml
 spring:
   application:
     name: catalog-service
+  
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:catalog_db}
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:TokyoTokyo123321}
+    url: jdbc:postgresql://localhost:5433/catalog_db
+    username: postgres
+    password: TokyoTokyo123321
     driver-class-name: org.postgresql.Driver
+  
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: false
-    open-in-view: false
     properties:
       hibernate:
-        default_schema: public
-        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  
   flyway:
     enabled: true
-    baseline-on-migrate: true
     locations: classpath:db/migration
-    schemas: public
-    validate-on-migrate: true
+    user: postgres
+    password: TokyoTokyo123321
+    baseline-on-migrate: true
+
+server:
+  port: 8082
 
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
-
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics
-  endpoint:
-    health:
-      show-details: when-authorized
-
-logging:
-  level:
-    org.flywaydb: INFO
-    org.hibernate.SQL: WARN
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true

@@ -8,7 +8,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "cars", schema = "public")
+@Table(name = "cars")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -47,12 +47,10 @@ public class Car {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
-     
-
     @PrePersist
     void prePersist() {
-        if (createdAt == null) createdAt = Instant.now();
-        if (updatedAt == null) updatedAt = Instant.now();
+        createdAt = Instant.now();
+        updatedAt = Instant.now();
     }
 
     @PreUpdate
